@@ -5,11 +5,11 @@ Created on Sat Aug 05 23:55:12 2017
 @author: Kazushige Okayasu, Hirokatsu Kataoka
 """
 
+import argparse
 import os
 import time
-import argparse
-import numpy as np
 
+import numpy as np
 from ifs_function import ifs_function
 
 
