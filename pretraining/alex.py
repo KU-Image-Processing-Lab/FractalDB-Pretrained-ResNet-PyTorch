@@ -1,23 +1,26 @@
-import torchvision
-import torch.nn as nn
-import torch.utils.model_zoo as model_zoo
-
 import math
 
-__all__ = ['AlexNet', 'alex','bvlc_AlexNet', 'bvlc_alex', 'bn_AlexNet', 'bn_alexnet']
+import torch.nn as nn
+import torch.utils.model_zoo as model_zoo
+import torchvision
+
+__all__ = ["AlexNet", "alex", "bvlc_AlexNet", "bvlc_alex", "bn_AlexNet", "bn_alexnet"]
+
 
 class LRN(nn.Module):
     def __init__(self, local_size=1, alpha=1.0, beta=0.75, ACROSS_CHANNELS=True):
         super(LRN, self).__init__()
         self.ACROSS_CHANNELS = ACROSS_CHANNELS
         if ACROSS_CHANNELS:
-            self.average=nn.AvgPool3d(kernel_size=(local_size, 1, 1),
-                    stride=1,
-                    padding=(int((local_size-1.0)/2), 0, 0))
+            self.average = nn.AvgPool3d(
+                kernel_size=(local_size, 1, 1),
+                stride=1,
+                padding=(int((local_size - 1.0) / 2), 0, 0),
+            )
         else:
-            self.average=nn.AvgPool2d(kernel_size=local_size,
-                    stride=1,
-                    padding=int((local_size-1.0)/2))
+            self.average = nn.AvgPool2d(
+                kernel_size=local_size, stride=1, padding=int((local_size - 1.0) / 2)
+            )
         self.alpha = alpha
         self.beta = beta
 
@@ -33,42 +36,43 @@ class LRN(nn.Module):
         x = x.div(div)
         return x
 
+
 class AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
         super(AlexNet, self).__init__()
         self.features = nn.Sequential(
-            #conv1
+            # conv1
             nn.Conv2d(3, 64, kernel_size=11, stride=4, padding=2),
             nn.ReLU(inplace=True),
-            #pool1
+            # pool1
             nn.MaxPool2d(kernel_size=3, stride=2),
-            #conv2
+            # conv2
             nn.Conv2d(64, 192, kernel_size=5, padding=2),
             nn.ReLU(inplace=True),
-            #pool2
+            # pool2
             nn.MaxPool2d(kernel_size=3, stride=2),
-            #conv3
+            # conv3
             nn.Conv2d(192, 384, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            #conv4
+            # conv4
             nn.Conv2d(384, 256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            #conv5
+            # conv5
             nn.Conv2d(256, 256, kernel_size=3, padding=1),
             nn.ReLU(inplace=True),
-            #pool5
+            # pool5
             nn.MaxPool2d(kernel_size=3, stride=2),
         )
         self.classifier = nn.Sequential(
-            #fc6
+            # fc6
             nn.Dropout(opt.dropout_rate),
             nn.Linear(256 * 6 * 6, opt.fc),
             nn.ReLU(inplace=True),
-            #fc7
+            # fc7
             nn.Dropout(opt.dropout_rate),
             nn.Linear(opt.fc, opt.fc),
             nn.ReLU(inplace=True),
-            #fc8
+            # fc8
             nn.Linear(opt.fc, num_classes),
         )
 
@@ -77,6 +81,7 @@ class AlexNet(nn.Module):
         x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
         return x
+
 
 def alex(pretrained=False, **kwargs):
     """AlexNet model architecture from the
@@ -91,6 +96,7 @@ def alex(pretrained=False, **kwargs):
         model.classifier[4].weight = model_zoo.classifier[4].weight
         model.classifier[4].bias = model_zoo.classifier[4].bias
     return model
+
 
 class bvlc_AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
@@ -121,7 +127,7 @@ class bvlc_AlexNet(nn.Module):
             nn.Dropout(0.5),
             nn.Linear(4096, num_classes),
         )
-        #self._initialize_weights()
+        # self._initialize_weights()
 
     def forward(self, x):
         x = self.features(x)
@@ -148,7 +154,7 @@ class bvlc_AlexNet(nn.Module):
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-                m.weight.data.normal_(0, math.sqrt(2. / n))
+                m.weight.data.normal_(0, math.sqrt(2.0 / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.Linear):
@@ -156,9 +162,11 @@ class bvlc_AlexNet(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+
 def bvlc_alex(pretrained=False, **kwargs):
     model = bvlc_AlexNet(**kwargs)
     return model
+
 
 class bn_AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
@@ -196,7 +204,7 @@ class bn_AlexNet(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), 256*6*6)
+        x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
         return x
 
@@ -205,7 +213,7 @@ class bn_AlexNet(nn.Module):
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 for i in range(m.out_channels):
-                    m.weight.data[i].normal_(0, math.sqrt(2. / n))
+                    m.weight.data[i].normal_(0, math.sqrt(2.0 / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
@@ -214,6 +222,7 @@ class bn_AlexNet(nn.Module):
             elif isinstance(m, nn.Linear):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
+
 
 def bn_alexnet(pretrained=False, **kwargs):
     model = bn_AlexNet(**kwargs)
