@@ -1,13 +1,15 @@
 import math
-
 import os
+
 import numpy as np
 import torch
 import torch.nn as nn
 from args import conf
+
 args = conf()
 
-__all__ = [ 'bn_AlexNet', 'bn_alexnet']
+__all__ = ["bn_AlexNet", "bn_alexnet"]
+
 
 class bn_AlexNet(nn.Module):
     def __init__(self, num_classes=1000):
@@ -45,7 +47,7 @@ class bn_AlexNet(nn.Module):
 
     def forward(self, x):
         x = self.features(x)
-        x = x.view(x.size(0), 256*6*6)
+        x = x.view(x.size(0), 256 * 6 * 6)
         x = self.classifier(x)
         return x
 
@@ -54,7 +56,7 @@ class bn_AlexNet(nn.Module):
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 for i in range(m.out_channels):
-                    m.weight.data[i].normal_(0, math.sqrt(2. / n))
+                    m.weight.data[i].normal_(0, math.sqrt(2.0 / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
@@ -64,13 +66,23 @@ class bn_AlexNet(nn.Module):
                 m.weight.data.normal_(0, 0.01)
                 m.bias.data.zero_()
 
+
 def bn_alexnet(pretrained=False, **kwargs):
     model = bn_AlexNet(**kwargs)
     return model
 
 
 CFG = {
-    '2012': [(96, 11, 4, 2), 'M', (256, 5, 1, 2), 'M', (384, 3, 1, 1), (384, 3, 1, 1), (256, 3, 1, 1), 'M']
+    "2012": [
+        (96, 11, 4, 2),
+        "M",
+        (256, 5, 1, 2),
+        "M",
+        (384, 3, 1, 1),
+        (384, 3, 1, 1),
+        (256, 3, 1, 1),
+        "M",
+    ]
 }
 
 
@@ -78,12 +90,14 @@ class dc_AlexNet(nn.Module):
     def __init__(self, features, num_classes, sobel):
         super(dc_AlexNet, self).__init__()
         self.features = features
-        self.classifier = nn.Sequential(nn.Dropout(0.5),
-                            nn.Linear(256 * 6 * 6, args.numof_fclayer),
-                            nn.ReLU(inplace=True),
-                            nn.Dropout(0.5),
-                            nn.Linear(args.numof_fclayer, args.numof_fclayer),
-                            nn.ReLU(inplace=True))
+        self.classifier = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(256 * 6 * 6, args.numof_fclayer),
+            nn.ReLU(inplace=True),
+            nn.Dropout(0.5),
+            nn.Linear(args.numof_fclayer, args.numof_fclayer),
+            nn.ReLU(inplace=True),
+        )
 
         self.top_layer = nn.Linear(args.numof_fclayer, num_classes)
         self._initialize_weights()
@@ -121,7 +135,7 @@ class dc_AlexNet(nn.Module):
             if isinstance(m, nn.Conv2d):
                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
                 for i in range(m.out_channels):
-                    m.weight.data[i].normal_(0, math.sqrt(2. / n))
+                    m.weight.data[i].normal_(0, math.sqrt(2.0 / n))
                 if m.bias is not None:
                     m.bias.data.zero_()
             elif isinstance(m, nn.BatchNorm2d):
@@ -136,10 +150,12 @@ def make_layers_features(cfg, input_dim, bn):
     layers = []
     in_channels = input_dim
     for v in cfg:
-        if v == 'M':
+        if v == "M":
             layers += [nn.MaxPool2d(kernel_size=3, stride=2)]
         else:
-            conv2d = nn.Conv2d(in_channels, v[0], kernel_size=v[1], stride=v[2], padding=v[3])
+            conv2d = nn.Conv2d(
+                in_channels, v[0], kernel_size=v[1], stride=v[2], padding=v[3]
+            )
             if bn:
                 layers += [conv2d, nn.BatchNorm2d(v[0]), nn.ReLU(inplace=True)]
             else:
@@ -148,19 +164,19 @@ def make_layers_features(cfg, input_dim, bn):
     return nn.Sequential(*layers)
 
 
-#def bn_alex_deepclustering(sobel=False, bn=True, out=1000):
+# def bn_alex_deepclustering(sobel=False, bn=True, out=1000):
 #    dim = 2 + int(not sobel)
 #    model = dc_AlexNet(make_layers_features(CFG['2012'], dim, bn=bn), out, sobel)
 #    return model
 
-#class rot_Flatten(nn.Module):
+# class rot_Flatten(nn.Module):
 #    def __init__(self):
 #        super(rot_Flatten, self).__init__()
 #
 #    def forward(self, feat):
 #        return feat.view(feat.size(0), -1)
 
-#class rot_AlexNet(nn.Module):
+# class rot_AlexNet(nn.Module):
 #    def __init__(self, opt):
 #        super(rot_AlexNet, self).__init__()
 #        num_classes = opt['num_classes']
@@ -209,7 +225,7 @@ def make_layers_features(cfg, input_dim, bn):
 #        )
 #
 #        self._feature_blocks = nn.ModuleList([
-#            conv1, pool1, conv2, pool2, conv3, 
+#            conv1, pool1, conv2, pool2, conv3,
 #            conv4, conv5, pool5, fc_block, classifier,
 #        ])
 #        self.all_feat_names = [
@@ -273,7 +289,7 @@ def make_layers_features(cfg, input_dim, bn):
 #
 #        return filters
 #
-#def load_pretrained(network, pretrained_path):
+# def load_pretrained(network, pretrained_path):
 #    assert(os.path.isfile(pretrained_path))
 #    pretrained_model = torch.load(pretrained_path)
 #    if pretrained_model['network'].keys() == network.state_dict().keys():
